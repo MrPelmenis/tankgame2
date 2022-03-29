@@ -7,14 +7,17 @@ class SocketSender {
         this.tankJoinedCallback = null;
         this.tankLeftCallback = null;
 
+        this.socket.on("tankMoved", (data) => {
+            if (tankMovedCallback != null) tankMovedCallback(data);
+        });
+
+
         this.socket.on("giveGroundMeshInfoResponse", (data) => {
             callback(data);
         });
 
         this.socket.on("tankJoined", (tank) => {
-            if (this.tankMovedCallback) {
-
-            }
+            if (this.tankJoinedCallback != null) this.tankJoinedCallback(data);
         });
     }
 

@@ -1,8 +1,6 @@
 import * as THREE from './three.js/three.module.js';
 import { GLTFLoader } from './three.js/GLTFLoader.js';
 
-import SocketSender from "./SocketSender.js";
-
 class KeyboardReader {
     constructor(myTank) {
         this.myTank = myTank;
@@ -78,7 +76,6 @@ class KeyboardReader {
 
 class Tank {
     constructor(world, socket) {
-
         this.id = null;
 
         this.world = world;

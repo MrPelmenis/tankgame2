@@ -25,15 +25,15 @@ function start() {
         MyClientTank.id = socket.id;
     });
 
-    socket.tankJoinedCallback = (data) => {
-        if (data.id != MyClientTank.id) {
-            if (tanks.find(tonka => tonka.id == data.id) != null) {
-                let newTank = new Tank(world, socket)
-                tanks.push(newTank);
-                newTank.id = data.id;
-            }
-        }
-    }
+    /* socket.tankJoinedCallback = (data) => {
+         if (data.id != MyClientTank.id) {
+             if (tanks.find(tonka => tonka.id == data.id) != null) {
+                 let newTank = new Tank(world, socket)
+                 tanks.push(newTank);
+                 newTank.id = data.id;
+             }
+         }
+     }*/
 
     socket.tankLeftCallback = (data) => {
 
