@@ -7,8 +7,9 @@ class SocketSender {
         this.tankJoinedCallback = null;
         this.tankLeftCallback = null;
 
+        //vajag katram savu tank moved callback uzlikt
         this.socket.on("tankMoved", (data) => {
-            if (tankMovedCallback != null) tankMovedCallback(data);
+            if (this.tankMovedCallback) this.tankMovedCallback(data);
         });
 
 
@@ -17,8 +18,13 @@ class SocketSender {
         });
 
         this.socket.on("tankJoined", (tank) => {
-            if (this.tankJoinedCallback != null) this.tankJoinedCallback(data);
+            if (this.tankJoinedCallback) this.tankJoinedCallback(tank);
+            console.log(tank);
         });
+    }
+
+    registerTank() {
+        this.emitMessage("registerTank", null);
     }
 
     getGroundInfo() {

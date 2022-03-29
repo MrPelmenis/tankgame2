@@ -63,12 +63,23 @@ let server = require('http').createServer((request, response) => {
 let io = require('socket.io')(server);
 io.on('connection', client => {
     console.log("client connected, " + client.id);
+    tanks.push({ id: client.id, x: worldSize / 2, z: worldSize / 2, angle: 0, color: Math.floor(Math.random() * 16777215) });
 
-    tanks.push({ id: client.id, x: worldSize / 2, z: worldSize / 2, angle: 0 });
-    tanks.forEach(t => {
-        io.to(t.id).emit("tankJoined", t);
+    client.on('registerTank', data => {
+        tanks.forEach(t => {
+            tanks.forEach(client => {
+                io.to(client.id).emit("tankJoined", t);
+                console.log("aaaa  " + t.id);
+            });
+        });
     });
 
+    client.on("giveGroundMeshInfo", data => {
+        if (!currentGroundMeshPointHeightslist) {
+            currentGroundMeshPointHeightslist = makeTheArrayOfGround(worldSize, worldSize);
+        }
+        io.to(client.id).emit("giveGroundMeshInfoResponse", { listOfPoints: currentGroundMeshPointHeightslist });
+    });
 
     client.on('tankNewCoords', data => {
         let tank = tanks.find(tank => {
@@ -84,17 +95,10 @@ io.on('connection', client => {
         console.log(tank);
     });
 
-
     client.on('disconnect', () => {
         tanks = tanks.filter(tank => {
             return tank.id != client.id;
         })
-    });
-    client.on("giveGroundMeshInfo", data => {
-        if (!currentGroundMeshPointHeightslist) {
-            currentGroundMeshPointHeightslist = makeTheArrayOfGround(worldSize, worldSize);
-        }
-        io.to(client.id).emit("giveGroundMeshInfoResponse", { listOfPoints: currentGroundMeshPointHeightslist });
     });
 });
 

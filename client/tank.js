@@ -92,14 +92,6 @@ class Tank {
             this.tankMovedCallback(data);
         }
 
-
-        this.socket.tankJoinedCallback = (data) => {
-            this.tankJoinedCallback(data);
-        }
-        this.socket.tankLeftCallback = (data) => {
-            this.tankLeftCallback(data);
-        }
-
         this.x = 0;
         this.y = 0;
         this.z = 0;
@@ -108,14 +100,15 @@ class Tank {
 
 
         const geometry = new THREE.BoxGeometry(2, 1, 1);
-        const material = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
+
+        this.material = new THREE.MeshStandardMaterial({ color: 0xffffff });
 
         this.group = new THREE.Group();
-        let mainCube = new THREE.Mesh(geometry, material);
+        let mainCube = new THREE.Mesh(geometry, this.material);
         mainCube.castShadow = true;
         mainCube.receiveShadow = true;
         let smallCubeg = new THREE.BoxGeometry(1.3, 1.3, 1.3);
-        let smallCube = new THREE.Mesh(smallCubeg, material);
+        let smallCube = new THREE.Mesh(smallCubeg, this.material);
         smallCube.castShadow = true;
         smallCube.receiveShadow = true;
         smallCube.position.set(0, 0.2, 1.5);
@@ -151,7 +144,8 @@ class Tank {
     }
 
     tankMovedCallback(tank) {
-        if (this.socket.socket.id == tank.id) {
+        console.log([tank.id, this.id]);
+        if (this.id == tank.id) {
             this.x = tank.x;
             this.z = tank.z;
             this.rotationAngle = tank.angle;
