@@ -27,7 +27,6 @@ class World {
         this.cameraAngle = 0;
         this.groundMesh = null;
         this.groundMeshPointHeights = groundInfo;
-        this.tanks = [];
     }
 
     init() {

@@ -67,10 +67,7 @@ io.on('connection', client => {
 
     client.on('registerTank', data => {
         tanks.forEach(t => {
-            tanks.forEach(client => {
-                io.to(client.id).emit("tankJoined", t);
-                console.log("aaaa  " + t.id);
-            });
+            io.to(t.id).emit("tankListUpdate", tanks);
         });
     });
 
@@ -82,6 +79,7 @@ io.on('connection', client => {
     });
 
     client.on('tankNewCoords', data => {
+        //console.log(data);
         let tank = tanks.find(tank => {
             return tank.id == client.id;
         });
@@ -96,9 +94,16 @@ io.on('connection', client => {
     });
 
     client.on('disconnect', () => {
+        let disconnectedTank = tanks.find(tank => {
+            return tank.id == client.id;
+        });
         tanks = tanks.filter(tank => {
             return tank.id != client.id;
-        })
+        });
+        tanks.forEach(t => {
+            io.to(t.id).emit("tankListUpdate", tanks);
+        });
+
     });
 });
 

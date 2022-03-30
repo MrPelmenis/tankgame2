@@ -7,11 +7,11 @@ let socket;
 let world;
 
 let MyClientTank;
-let MyClientKeyboardController;
+//let MyClientKeyboardController;
 
 let groundPointHeights;
 
-let tanks = [];
+let game = { tanks: [] };
 
 function start() {
     socket = new SocketSender("http://localhost:6868", (data) => {
@@ -20,30 +20,40 @@ function start() {
         world = new World(groundPointHeights);
         world.init();
 
-        MyClientTank = new Tank(world, socket);
-        MyClientKeyboardController = new KeyboardReader(MyClientTank);
+        /*MyClientTank = new Tank(world, socket);
+        MyClientTank.tavamamma = 1;
         MyClientTank.id = socket.socket.id;
-        console.log(socket.socket.id);
+        console.log(socket.socket.id);*/
+        let MyClientKeyboardController = new KeyboardReader(socket.socket.id, game);
+        document.getElementById("tempIdShower2").innerHTML = socket.socket.id;
         socket.registerTank();
-    });
+    }, game);
 
-    socket.tankJoinedCallback = (data) => {
-        if (data.id != MyClientTank.id) {
-            if (tanks.find(tonka => tonka.id == data.id) == null) {
-                let newTank = new Tank(world, socket);
-                newTank.id = data.id;
-                newTank.material.color.setHex(data.color);
-                tanks.push(newTank);
-                console.log(tanks.length);
-            }
-        } else {
-            MyClientTank.material.color.setHex(data.color);
-        }
+    socket.tankListUpdateCallback = (currentTanks) => {
+
+        let newTanks = currentTanks.filter(sentTank => {
+            return !game.tanks.find(localTank => sentTank.id == localTank.id);
+        });
+
+        let disconectedTanks = game.tanks.filter(localTank => {
+            return !currentTanks.find(sentTank => sentTank.id == localTank.id);
+        });
+
+        newTanks.forEach(data => {
+            let newTank = new Tank(world, socket);
+            newTank.id = data.id;
+            newTank.material.color.setHex(data.color);
+            game.tanks.push(newTank);
+        });
+
+        disconectedTanks.forEach(data => {
+            data.removeObject();
+            game.tanks = game.tanks.filter(localTank => localTank.id != data.id);
+        });
+
+        console.log(game.tanks.map(t => t.id));
     }
 
-    socket.tankLeftCallback = (data) => {
-
-    }
     socket.getGroundInfo();
 }
 

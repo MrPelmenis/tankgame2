@@ -13,9 +13,18 @@
     <script type="module" src="../node_modules/socket.io-client/dist/socket.io.js"></script>
     <script type="module" src="js.js"></script>
 
+    <script>
+        function con(addedText) {
+            document.getElementById("tempIdShower").innerHTML = addedText + "<br>" + document.getElementById("tempIdShower").innerHTML;
+        }
+    </script>
+
 </head>
 
 <body>
+    <div id="tempIdShower" style="z-index: 4; height:100px; font-size:20px"></div>
+
+    <div id="tempIdShower2"></div>
 </body>
 
 </html>

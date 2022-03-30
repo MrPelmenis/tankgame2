@@ -2,8 +2,9 @@ import * as THREE from './three.js/three.module.js';
 import { GLTFLoader } from './three.js/GLTFLoader.js';
 
 class KeyboardReader {
-    constructor(myTank) {
-        this.myTank = myTank;
+    constructor(myTankID, game) {
+        this.myTankID = myTankID;
+        this.game = game;
         this.keys = { w: false, a: false, s: false, d: false }
         document.onkeydown = (e) => {
             this.keydown(e);
@@ -43,34 +44,39 @@ class KeyboardReader {
     }
 
     moveTank() {
-        let newCoords = { x: this.myTank.x, angle: this.myTank.rotationAngle, z: this.myTank.z };
-        let changed = false;
+        let myTank = this.game.tanks.find(t => t.id == this.myTankID);
 
-        if (this.keys.d == true) {
-            newCoords.angle = this.myTank.rotationAngle - this.myTank.rotationSpeed;
-            changed = true;
-        }
-        if (this.keys.a == true) {
-            newCoords.angle = this.myTank.rotationAngle + this.myTank.rotationSpeed;
-            changed = true;
-        }
-        if (this.keys.w == true) {
-            newCoords.z = this.myTank.z + Math.cos(this.myTank.rotationAngle * Math.PI / 180) * this.myTank.movementMultiplier;
-            newCoords.x = this.myTank.x + Math.sin(this.myTank.rotationAngle * Math.PI / 180) * this.myTank.movementMultiplier;
-            changed = true;
-        }
-        if (this.keys.s == true) {
-            newCoords.z = this.myTank.z - Math.cos(this.myTank.rotationAngle * Math.PI / 180) * this.myTank.movementMultiplier;
-            newCoords.x = this.myTank.x - Math.sin(this.myTank.rotationAngle * Math.PI / 180) * this.myTank.movementMultiplier;
-            changed = true;
-        }
-        if (changed) {
-            this.myTank.socket.sendNewCoordsToServer(newCoords);
+        if (myTank) {
+            let newCoords = { x: myTank.x, angle: myTank.rotationAngle, z: myTank.z };
+            let changed = false;
+
+            if (this.keys.d == true) {
+                newCoords.angle = myTank.rotationAngle - myTank.rotationSpeed;
+                changed = true;
+            }
+            if (this.keys.a == true) {
+                newCoords.angle = myTank.rotationAngle + myTank.rotationSpeed;
+                changed = true;
+            }
+            if (this.keys.w == true) {
+                newCoords.z = myTank.z + Math.cos(myTank.rotationAngle * Math.PI / 180) * myTank.movementMultiplier;
+                newCoords.x = myTank.x + Math.sin(myTank.rotationAngle * Math.PI / 180) * myTank.movementMultiplier;
+                changed = true;
+            }
+            if (this.keys.s == true) {
+                newCoords.z = myTank.z - Math.cos(myTank.rotationAngle * Math.PI / 180) * myTank.movementMultiplier;
+                newCoords.x = myTank.x - Math.sin(myTank.rotationAngle * Math.PI / 180) * myTank.movementMultiplier;
+                changed = true;
+            }
+            if (changed) {
+                con(myTank.id + "     " + myTank.x + "    " + myTank.z);
+                myTank.socket.sendNewCoordsToServer(newCoords);
+            }
         }
         setTimeout(() => {
             this.moveTank();
         },
-            10);
+            100);
     }
 }
 
@@ -83,21 +89,14 @@ class Tank {
         this.scene = world.scene;
         this.rotationAngle = 0;
         this.kys = { w: false, a: false, s: false, d: false };
-        this.movementMultiplier = 0.05;
-        this.rotationSpeed = 2;
+        this.movementMultiplier = 0.5;
+        this.rotationSpeed = 20;
 
         this.socket = socket;
-
-        this.socket.tankMovedCallback = (data) => {
-            this.tankMovedCallback(data);
-        }
 
         this.x = 0;
         this.y = 0;
         this.z = 0;
-
-        this.world.tanks.push(this);
-
 
         const geometry = new THREE.BoxGeometry(2, 1, 1);
 
@@ -122,9 +121,10 @@ class Tank {
         this.scene.add(this.group);
 
         this.placeCube();
+    }
 
-
-        this.myKeyboardController = new KeyboardReader(this);
+    removeObject() {
+        this.world.scene.remove(this.group);
     }
 
     castRay(p1, p2, scene) {
@@ -144,7 +144,7 @@ class Tank {
     }
 
     tankMovedCallback(tank) {
-        console.log([tank.id, this.id]);
+        //console.log([tank.id, this.id]);
         if (this.id == tank.id) {
             this.x = tank.x;
             this.z = tank.z;

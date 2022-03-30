@@ -1,25 +1,28 @@
 class SocketSender {
-    constructor(url, callback) {
+    constructor(url, callback, game) {
         this.url = url;
+        this.game = game;
         this.socket = io(url);
-        this.tankMovedCallback = null;
 
-        this.tankJoinedCallback = null;
-        this.tankLeftCallback = null;
+        this.tankListUpdateCallback = null;
 
         //vajag katram savu tank moved callback uzlikt
         this.socket.on("tankMoved", (data) => {
-            if (this.tankMovedCallback) this.tankMovedCallback(data);
-        });
+            let neededTank = this.game.tanks.find(tank => tank.id == data.id);
+            if (neededTank) {
+                con(data.id + "  moved  " + data.x + "  " + data.z);
+                neededTank.tankMovedCallback(data);
+            }
 
+        });
 
         this.socket.on("giveGroundMeshInfoResponse", (data) => {
             callback(data);
         });
 
-        this.socket.on("tankJoined", (tank) => {
-            if (this.tankJoinedCallback) this.tankJoinedCallback(tank);
-            console.log(tank);
+        this.socket.on("tankListUpdate", (tanks) => {
+            if (this.tankListUpdateCallback) this.tankListUpdateCallback(tanks);
+            //console.log(tanks);
         });
     }
 
