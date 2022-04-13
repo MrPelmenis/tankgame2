@@ -63,7 +63,7 @@ let server = require('http').createServer((request, response) => {
 let io = require('socket.io')(server);
 io.on('connection', client => {
     console.log("client connected, " + client.id);
-    tanks.push({ id: client.id, x: worldSize / 2, z: worldSize / 2, angle: 0, color: Math.floor(Math.random() * 16777215) });
+    tanks.push({ id: client.id, x: worldSize / 2, z: worldSize / 2, angle: 0, color: Math.floor(Math.random() * 16777215), gunAngle: 0 });
 
     client.on('registerTank', data => {
         tanks.forEach(t => {
@@ -86,6 +86,7 @@ io.on('connection', client => {
         tank.x = data.x;
         tank.z = data.z;
         tank.angle = data.angle;
+        tank.gunAngle = data.gunAngle;
 
         tanks.forEach(t => {
             io.to(t.id).emit("tankMoved", tank);
@@ -115,15 +116,15 @@ function makeTheArrayOfGround(widthSegments, heightSegments) {
     for (let i = 0; i < widthSegments; i++) {
         let pushable = [];
         for (let j = 0; j < heightSegments; j++) {
-            if (Math.random() * 100 > 99) {
-                pushable.push(125);
+            if (Math.random() * 300 > 299) {
+                pushable.push(900);
             } else {
                 pushable.push(0);
             }
         }
         hillsHeight.push(pushable);
     }
-    hillsHeight = round2dArray(hillsHeight, 6, worldSize, worldSize);
+    hillsHeight = round2dArray(hillsHeight, 16, worldSize, worldSize);
 
     return hillsHeight;
 }
@@ -175,24 +176,6 @@ function round2dArray(array, times, widthSegments, heightSegments) {
     }
     return hillsHeight;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

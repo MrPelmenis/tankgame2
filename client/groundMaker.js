@@ -18,8 +18,10 @@ const pointer = new THREE.Vector2();
 
 
 class World {
-    constructor(groundInfo) {
+    constructor(groundInfo, game) {
         this.camera;
+        this.game = game;
+        this.myTankID = null;
         this.scene;
         this.renderer;
         this.size = 300;
@@ -27,6 +29,7 @@ class World {
         this.cameraAngle = 0;
         this.groundMesh = null;
         this.groundMeshPointHeights = groundInfo;
+        this.myTank = null;
     }
 
     init() {
@@ -60,11 +63,13 @@ class World {
 
     animate() {
         this.renderer.setAnimationLoop(() => {
-            this.camera.position.x = Math.cos(Math.PI) * 50 + size / 2;
-            this.camera.position.z = Math.sin(Math.PI) * 50 + size / 2;
-            //this.cameraAngle += 0.001;
-            this.camera.lookAt(this.size / 2, 0, this.size / 2);
-
+            let tank = this.game.tanks.find(t => this.myTankID == t.id);
+            if (tank) {
+                this.camera.position.x = tank.x - Math.sin((-tank.rotationAngle + 90) * Math.PI / 180) * 25;
+                this.camera.position.z = tank.z - Math.cos((-tank.rotationAngle + 90) * Math.PI / 180) * 25;
+                this.camera.position.y = tank.y + 10;
+                this.camera.lookAt(tank.x, tank.y, tank.z);
+            }
             this.renderer.render(this.scene, this.camera);
         });
     }
@@ -98,7 +103,7 @@ class World {
 
 
     generateGround(points) {
-        const material = new THREE.MeshStandardMaterial({ color: 0x32456a })
+        const material = new THREE.MeshStandardMaterial({ color: 0x154b2e })
         material.side = THREE.DoubleSide;
         let geometry = new THREE.BufferGeometry();
         geometry.setFromPoints(points);
@@ -255,7 +260,7 @@ function addObj(x, y, z, size) {
 }
 
 
-function animate() {
+/*function animate() {
     renderer.setAnimationLoop(() => {
         camera.position.x = Math.cos(cameraAngle) * 50 + size / 2;
         camera.position.z = Math.sin(cameraAngle) * 50 + size / 2;
@@ -264,7 +269,7 @@ function animate() {
 
         renderer.render(scene, camera);
     });
-}
+}*/
 
 
 

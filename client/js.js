@@ -17,8 +17,9 @@ function start() {
     socket = new SocketSender("http://localhost:6868", (data) => {
         console.log(data);
         groundPointHeights = data.listOfPoints;
-        world = new World(groundPointHeights);
+        world = new World(groundPointHeights, game);
         world.init();
+        world.myTankID = socket.socket.id;
 
         /*MyClientTank = new Tank(world, socket);
         MyClientTank.tavamamma = 1;
