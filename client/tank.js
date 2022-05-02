@@ -5,12 +5,20 @@ class KeyboardReader {
     constructor(myTankID, game) {
         this.myTankID = myTankID;
         this.game = game;
-        this.keys = { w: false, a: false, s: false, d: false, e: false, q: false };
+        this.keys = { w: false, a: false, s: false, d: false, e: false, q: false, space: false };
         document.onkeydown = (e) => {
             this.keydown(e);
         }
         document.onkeyup = (e) => {
             this.keyup(e);
+        }
+
+        document.onkeypress = (e) => {
+            if (e.keyCode == 32) {
+                let myTank = this.game.tanks.find(t => t.id == this.myTankID);
+                let obj = { x: myTank.aimBall.position.x, y: myTank.aimBall.position.y, z: myTank.aimBall.position.z, id: myTank.id }
+                myTank.socket.shotFired(obj);
+            }
         }
         this.moveTank();
     }
@@ -33,6 +41,10 @@ class KeyboardReader {
         if (e.keyCode == 69) {
             this.keys.e = true;
         }
+
+        if (e.keyCode == 32) {
+            this.keys.space = true;
+        }
     }
     keyup(e) {
         if (e.keyCode == 87) {
@@ -53,6 +65,10 @@ class KeyboardReader {
         if (e.keyCode == 69) {
             this.keys.e = false;
         }
+
+        if (e.keyCode == 32) {
+            this.keys.space = false;
+        }
     }
 
     moveTank() {
@@ -61,7 +77,6 @@ class KeyboardReader {
         if (myTank) {
             let newCoords = { x: myTank.x, angle: myTank.rotationAngle, z: myTank.z, gunAngle: myTank.gunAngle };
             let changed = false;
-
 
             if (this.keys.q == true) {
                 newCoords.gunAngle = myTank.gunAngle + 2;
@@ -119,9 +134,17 @@ class Tank {
 
         this.socket = socket;
 
+        const geometryAimBall = new THREE.SphereGeometry(0.2, 32, 16);
+        const materialAimBall = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+        this.aimBall = new THREE.Mesh(geometryAimBall, materialAimBall);
+        this.scene.add(this.aimBall);
+
         this.x = 0;
         this.y = 0;
         this.z = 0;
+
+        this.particles = [];
+        this.particleMove();
 
         const geometry = new THREE.BoxGeometry(2, 1, 1);
 
@@ -136,10 +159,12 @@ class Tank {
         this.x = world.size / 2;
         this.y = 5;
         this.z = world.size / 2;
-        this.scene.add(this.group);
+        if (this.group)
+            this.scene.add(this.group);
 
         this.placeCube();
     }
+
 
 
     addObj(callback, path, scene) {
@@ -175,8 +200,6 @@ class Tank {
         });
 
     }
-
-
 
     removeObject() {
         this.world.scene.remove(this.group);
@@ -226,10 +249,78 @@ class Tank {
             let tanRes = heightDif / 2;
             let angle = Math.atan(tanRes);
             this.group.rotation.z = -angle;
-
             this.placeCube();
+
+
+            this.moveAimBall();
+
+
         }
     }
+
+    moveAimBall() {
+        let point = new THREE.Vector3(this.x, this.y + 1, this.z);
+        let direction = new THREE.Vector3(Math.cos(this.rotationAngle * Math.PI / 180), Math.sin(this.gunAngle * Math.PI / 180), Math.sin(this.rotationAngle * Math.PI / 180));
+        direction.normalize();
+        let intersects = this.castRay(point, direction, this.world.scene);
+        let moved = false;
+        for (let i = 0; i < intersects.length; i++) {
+            if (intersects[i].object.name == "ground") {
+                this.aimBall.visible = true;
+                this.aimBall.position.x = intersects[i].point.x;
+                this.aimBall.position.y = intersects[i].point.y;
+                this.aimBall.position.z = intersects[i].point.z;
+                moved = true
+                break;
+            }
+        }
+        if (!moved)
+            this.aimBall.visible = false;
+        /* this.aimBall.position.x = this.x + direction.x;
+         this.aimBall.position.y = this.y + direction.y + 2;
+         this.aimBall.position.z = this.z + direction.z;
+ 
+         this.addBox(this.x + direction.x, this.y + direction.y + 2, this.z + direction.z);*/
+    }
+
+
+    explosion(info) {
+        /*const geometryAimBall = new THREE.SphereGeometry(1, 32, 16);
+        const materialAimBall = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+        let explosionBall = new THREE.Mesh(geometryAimBall, materialAimBall);
+        explosionBall.position.set(info.place.x, info.place.y, info.place.z);
+        this.scene.add(explosionBall);*/
+        for (let i = 0; i < 100; i++) {
+            const geometryAimBall = new THREE.SphereGeometry(0.2, 32, 16);
+            const materialAimBall = new THREE.MeshBasicMaterial({ color: 0xaaaaaa });
+            let particle = new THREE.Mesh(geometryAimBall, materialAimBall);
+            particle.position.set(info.place.x, info.place.y, info.place.z);
+            this.scene.add(particle);
+            let randomAngleTurn = Math.random() * 180;
+            let randomAngleHeight = Math.random() * 90;
+            this.particles.push({ count: 0, obj: particle, dir: { x: Math.sin(randomAngleTurn), y: Math.abs(Math.sin(randomAngleHeight)), z: Math.cos(randomAngleTurn) } });
+        };
+    }
+
+    particleMove() {
+        this.particles.forEach(particle => {
+            particle.obj.position.x += particle.dir.x;
+            particle.obj.position.y += particle.dir.y;
+            particle.obj.position.z += particle.dir.z;
+            particle.count++;
+        });
+
+        this.particles = this.particles.filter(particle => {
+            if (particle.count >= 10) {
+                this.scene.remove(particle.obj);
+                return false;
+            } else {
+                return true;
+            }
+        })
+        setTimeout(() => this.particleMove(), 10);
+    }
+
     spinGun() {
         this.gun.rotation.z = this.gunAngle * Math.PI / 180;
     }

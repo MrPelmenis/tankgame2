@@ -71,6 +71,21 @@ io.on('connection', client => {
         });
     });
 
+    client.on('shotFired', place => {
+        hitTanks = [];
+        tanks.forEach(tank => {
+            let distance = Math.sqrt(Math.pow(place.x - tank.x, 2) + Math.pow(place.z - tank.z, 2));
+            if (distance <= 4) {
+                hitTanks.push(tank.id);
+            }
+        });
+
+        tanks.forEach(t => {
+            io.to(t.id).emit("shotFired", { place: place, hitTanks: hitTanks });
+        });
+
+    });
+
     client.on("giveGroundMeshInfo", data => {
         if (!currentGroundMeshPointHeightslist) {
             currentGroundMeshPointHeightslist = makeTheArrayOfGround(worldSize, worldSize);

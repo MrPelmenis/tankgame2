@@ -55,6 +55,16 @@ function start() {
         console.log(game.tanks.map(t => t.id));
     }
 
+    socket.shotCallback = (data => {
+        game.tanks.forEach(tank => {
+            tank.explosion(data);
+        })
+        if (data.hitTanks.indexOf(socket.socket.id) != -1) {
+            socket.socket.disconnect();
+        }
+    });
+
+
     socket.getGroundInfo();
 }
 

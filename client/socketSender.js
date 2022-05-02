@@ -6,6 +6,8 @@ class SocketSender {
 
         this.tankListUpdateCallback = null;
 
+        this.shotCallback = null;
+
         //vajag katram savu tank moved callback uzlikt
         this.socket.on("tankMoved", (data) => {
             let neededTank = this.game.tanks.find(tank => tank.id == data.id);
@@ -13,7 +15,6 @@ class SocketSender {
                 con(data.id + "  moved  " + data.x + "  " + data.z);
                 neededTank.tankMovedCallback(data);
             }
-
         });
 
         this.socket.on("giveGroundMeshInfoResponse", (data) => {
@@ -24,6 +25,12 @@ class SocketSender {
             if (this.tankListUpdateCallback) this.tankListUpdateCallback(tanks);
             //console.log(tanks);
         });
+
+
+        this.socket.on("shotFired", (info) => {
+            if (this.shotCallback)
+                this.shotCallback(info);
+        });
     }
 
     registerTank() {
@@ -32,6 +39,10 @@ class SocketSender {
 
     getGroundInfo() {
         this.emitMessage("giveGroundMeshInfo", null);
+    }
+
+    shotFired(place) {
+        this.emitMessage("shotFired", place);
     }
 
     sendNewCoordsToServer(coords) {
